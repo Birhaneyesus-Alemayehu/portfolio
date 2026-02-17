@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birhaneyesus Alemayehu | 3D Parallax Portfolio</title>
+    
+    <!-- Preconnect for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --brand-purple: #7c3aed;
+            --brand-cyan: #06b6d4;
+            --brand-pink: #ec4899;
+            --bg-dark: #0a0118;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-dark);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* 3D Canvas Background */
+        #canvas-3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Parallax Layers */
+        .parallax-layer {
+            position: relative;
+            transform-style: preserve-3d;
+            will-change: transform;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .layer-front {
+            transform: translateZ(150px) scale(0.85);
+        }
+
+        .layer-mid {
+            transform: translateZ(75px) scale(0.925);
+        }
+
+        .layer-back {
+            transform: translateZ(0px) scale(1);
+        }
+
+        /* Enhanced Parallax on Scroll */
+        .parallax-layer.scroll-active {
+            transform: translateZ(0px) scale(1) !important;
+        }
+
+        /* Glass Morphism Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            transform-style: preserve-3d;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-15px) rotateX(5deg);
+            border-color: rgba(124, 58, 237, 0.5);
+            box-shadow: 
+                0 25px 50px -12px rgba(124, 58, 237, 0.4),
+                0 0 50px rgba(124, 58, 237, 0.2),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #fff 0%, #7c3aed 50%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* 3D Button */
+        .btn-3d {
+            position: relative;
+            transform-style: preserve-3d;
+            transition: all 0.3s ease;
+        }
+
+        .btn-3d::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            border-radius: inherit;
+            transform: translateZ(-20px);
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+
+        .btn-3d:hover {
+            transform: translateY(-8px) translateZ(20px);
+        }
+
+        .btn-3d:hover::before {
+            transform: translateZ(-40px);
+            opacity: 1;
+        }
+
+        /* Profile Float Animation */
+        .profile-float {
+            animation: profileFloat 8s ease-in-out infinite;
+        }
+
+        @keyframes profileFloat {
+            0%, 100% { 
+                transform: translateY(0) rotateY(-5deg) scale(1);
+            }
+            25% {
+                transform: translateY(-20px) rotateY(0deg) scale(1.02);
+            }
+            50% { 
+                transform: translateY(0) rotateY(5deg) scale(1);
+            }
+            75% {
+                transform: translateY(-15px) rotateY(0deg) scale(1.02);
+            }
+        }
+
+        /* Profile Image Morphing Effects */
+        .profile-morph {
+            transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .profile-morph.morph-circle {
+            border-radius: 50% !important;
+            transform: scale(0.85) rotate(360deg);
+            box-shadow: 
+                0 0 60px rgba(124, 58, 237, 0.6),
+                0 0 100px rgba(124, 58, 237, 0.4);
+        }
+
+        .profile-morph.morph-diamond {
+            border-radius: 30% !important;
+            transform: scale(0.9) rotate(45deg);
+            box-shadow: 
+                0 0 60px rgba(6, 182, 212, 0.6),
+                0 0 100px rgba(6, 182, 212, 0.4);
+        }
+
+        .profile-morph.morph-blob {
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40% !important;
+            transform: scale(0.95);
+            animation: blobMorph 8s ease-in-out infinite;
+            box-shadow: 
+                0 0 60px rgba(236, 72, 153, 0.6),
+                0 0 100px rgba(236, 72, 153, 0.4);
+        }
+
+        @keyframes blobMorph {
+            0%, 100% {
+                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            }
+            25% {
+                border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+            }
+            50% {
+                border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%;
+            }
+            75% {
+                border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%;
+            }
+        }
+
+        .profile-morph img {
+            transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .profile-morph.morph-diamond img {
+            transform: rotate(-45deg) scale(1.15);
+        }
+
+        .profile-morph.morph-blob img {
+            filter: hue-rotate(20deg) brightness(1.1);
+        }
+
+        .profile-morph.morph-circle img {
+            filter: hue-rotate(-20deg) brightness(1.05);
+        }
+
+        /* Depth Shadows */
+        .depth-shadow {
+            box-shadow: 
+                0 30px 60px -15px rgba(0, 0, 0, 0.6),
+                0 15px 30px -10px rgba(124, 58, 237, 0.3),
+                0 5px 15px -5px rgba(6, 182, 212, 0.2);
+        }
+
+        /* Project Cards with 3D Effect */
+        .project-card {
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .project-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+            transform-style: preserve-3d;
+        }
+
+        .project-card:hover .project-card-inner {
+            transform: rotateY(10deg) rotateX(5deg) scale(1.05);
+        }
+
+        /* Scroll Progress Indicator */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #7c3aed, #06b6d4, #ec4899);
+            z-index: 100;
+            transition: width 0.1s ease;
+        }
+
+        /* Navigation with Blur */
+        nav {
+            backdrop-filter: blur(20px) saturate(180%);
+            background: rgba(10, 1, 24, 0.75);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Floating Elements */
+        .float-element {
+            position: absolute;
+            pointer-events: none;
+            animation: floatRandom 20s ease-in-out infinite;
+        }
+
+        @keyframes floatRandom {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(100px, -50px) rotate(90deg); }
+            50% { transform: translate(50px, 100px) rotate(180deg); }
+            75% { transform: translate(-50px, 50px) rotate(270deg); }
+        }
+
+        /* Service Cards Stagger */
+        .service-card {
+            opacity: 0;
+            transform: translateY(60px) translateZ(-100px);
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .service-card.visible {
+            opacity: 1;
+            transform: translateY(0) translateZ(0);
+        }
+
+        /* Testimonial 3D Cards */
+        .testimonial-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s ease;
+        }
+
+        .testimonial-3d:hover {
+            transform: translateZ(30px) rotateX(-5deg);
+        }
+
+        /* Image Parallax Container */
+        .parallax-img-container {
+            overflow: hidden;
+            border-radius: 2rem;
+        }
+
+        .parallax-img {
+            transition: transform 1s cubic-bezier(0.23, 1, 0.32, 1);
+            will-change: transform;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .layer-front,
+            .layer-mid,
+            .layer-back {
+                transform: none !important;
+            }
+
+            .glass-card:hover,
+            .project-card:hover .project-card-inner,
+            .testimonial-3d:hover {
+                transform: translateY(-8px);
+            }
+
+            .profile-float {
+                animation: none;
+            }
+            
+            /* Disable 3D transforms on mobile */
+            .btn-3d::before {
+                display: none;
+            }
+            
+            /* Simplify depth shadows */
+            .depth-shadow {
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            }
+            
+            /* Reduce blur effects */
+            .glass-card {
+                backdrop-filter: blur(10px);
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .text-5xl {
+                font-size: 2.5rem;
+            }
+            
+            .text-7xl {
+                font-size: 3.5rem;
+            }
+            
+            .text-8xl {
+                font-size: 4rem;
+            }
+        }
+
+        /* Loading Screen */
+        .loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader-ring {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(124, 58, 237, 0.1);
+            border-top-color: #7c3aed;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Glow Effects */
+        .glow-purple {
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.3);
+        }
+
+        .glow-cyan {
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
+        }
+
+        /* Stats Counter Animation */
+        .stat-number {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <div class="loader-ring"></div>
+    </div>
+
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- 3D Canvas Background -->
+    <canvas id="canvas-3d"></canvas>
+
+    <!-- Floating Decorative Elements -->
+    <div class="float-element top-20 right-20 w-64 h-64 bg-purple-600/5 rounded-full blur-3xl"></div>
+    <div class="float-element bottom-20 left-20 w-96 h-96 bg-cyan-600/5 rounded-full blur-3xl" style="animation-delay: -5s;"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 py-5 transition-all" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="scrollToTop()">
+                <div class="w-11 h-11 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-2xl flex items-center justify-center font-bold text-white group-hover:rotate-180 transition-transform duration-500 shadow-lg">
+                    BA
+                </div>
+                <span class="text-xl font-bold tracking-tight uppercase">Bis <span class="text-purple-400">Design</span></span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#home" class="nav-link text-sm font-semibold hover:text-purple-400 transition-colors">Home</a>
+                <a href="#services" class="nav-link text-sm font-semibold hover:text-purple-400 transition-colors">Services</a>
+                <a href="#work" class="nav-link text-sm font-semibold hover:text-purple-400 transition-colors">Work</a>
+                <a href="#contact" class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full text-sm font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all btn-3d">
+                    Let's Talk
+                </a>
+            </div>
+
+            <button class="md:hidden text-purple-400" onclick="toggleMobileMenu()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative min-h-screen flex items-center pt-20">
+        <div class="max-w-7xl mx-auto px-6 w-full">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                
+                <!-- Hero Content - Layer Front -->
+                <div class="parallax-layer layer-front space-y-8">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-purple-300 text-xs font-bold uppercase tracking-wider">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                        </span>
+                        Available for Projects
+                    </div>
+
+                    <div>
+                        <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight mb-6">
+                            Hi, I'm
+                            <span class="gradient-text block">Birhaneyesus Alemayehu</span>
+                        </h1>
+                        <h2 class="text-2xl md:text-3xl font-semibold text-purple-300/90 mb-6 italic">
+                            Graphic Designer + Video Editor
+                        </h2>
+                        <p class="text-lg md:text-xl text-gray-400 leading-relaxed max-w-xl">
+                            I craft high-end visual identities, dynamic motion graphics, and robust digital products. From branding to mobile apps, I bring your vision to life with precision.
+                        </p>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="grid grid-cols-3 gap-6 max-w-md">
+                        <div class="text-center">
+                            <div class="text-3xl md:text-4xl font-bold gradient-text stat-number" data-target="150">0</div>
+                            <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Projects</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl md:text-4xl font-bold gradient-text stat-number" data-target="50">0</div>
+                            <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Clients</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl md:text-4xl font-bold gradient-text stat-number" data-target="5">0</div>
+                            <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Years</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#work" class="px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-2xl font-bold text-white shadow-xl hover:shadow-2xl hover:shadow-purple-500/50 transition-all btn-3d">
+                            View Portfolio
+                        </a>
+                        <a href="#contact" class="px-8 py-4 glass-card rounded-2xl font-bold hover:border-purple-500 transition-all">
+                            Get in Touch
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Profile Image - Layer Mid -->
+                <div class="parallax-layer layer-mid">
+                    <div class="relative profile-float">
+                        <div class="profile-morph relative w-full max-w-md mx-auto aspect-[3/4] rounded-[3rem] overflow-hidden depth-shadow glass-card" id="profileMorph">
+                            <div class="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-transparent to-cyan-600/20"></div>
+                            <img src="Img/Bis Suite.png" 
+                                 alt="Birhaneyesus Alemayehu" 
+                                 loading="eager"
+                                 class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 transform hover:scale-105"
+                                 onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1000&fit=crop'">
+                        </div>
+                        
+                        <!-- Decorative 3D Elements -->
+                        <div class="absolute -top-10 -right-10 w-40 h-40 border border-purple-500/20 rounded-full animate-pulse"></div>
+                        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-purple-600/30 to-cyan-600/30 rounded-full blur-3xl"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20 parallax-layer layer-back">
+                <span class="text-sm font-bold text-purple-400 uppercase tracking-widest">What I Do</span>
+                <h2 class="text-4xl md:text-6xl font-bold mt-4 mb-6">
+                    Expertise & <span class="gradient-text">Services</span>
+                </h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                    Comprehensive creative solutions across multiple disciplines
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Service Card 1 -->
+                <div class="service-card glass-card p-8 rounded-3xl group cursor-pointer">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-600 to-purple-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Graphic Design</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Brand identities, logo design, and complete visual systems that stand out in the digital landscape.
+                    </p>
+                </div>
+
+                <!-- Service Card 2 -->
+                <div class="service-card glass-card p-8 rounded-3xl group cursor-pointer">
+                    <div class="w-16 h-16 bg-gradient-to-br from-cyan-600 to-cyan-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Video Editing</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Cinematic storytelling through professional editing, color grading, and motion design.
+                    </p>
+                </div>
+
+                <!-- Service Card 3 -->
+                <div class="service-card glass-card p-8 rounded-3xl group cursor-pointer">
+                    <div class="w-16 h-16 bg-gradient-to-br from-pink-600 to-pink-400 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">UI/UX Design</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        User-centered interfaces and seamless experiences for web and mobile applications.
+                    </p>
+                </div>
+
+                <!-- Service Card 4 -->
+                <div class="service-card glass-card p-8 rounded-3xl group cursor-pointer">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">3D Design</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Stunning 3D visualizations, product renders, and immersive digital experiences.
+                    </p>
+                </div>
+
+                <!-- Service Card 5 -->
+                <div class="service-card glass-card p-8 rounded-3xl group cursor-pointer">
+                    <div class="w-16 h-16 bg-gradient-to-br from-cyan-600 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Motion Graphics</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Dynamic animations and kinetic typography that bring brands to life.
+                    </p>
+                </div>
+
+                <!-- Service Card 6 -->
+                <div class="service-card glass-card p-8 rounded-3xl group cursor-pointer">
+                    <div class="w-16 h-16 bg-gradient-to-br from-pink-600 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Web Development</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Modern, responsive websites and web applications built with cutting-edge technology.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="work" class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20">
+                <span class="text-sm font-bold text-purple-400 uppercase tracking-widest">Portfolio</span>
+                <h2 class="text-4xl md:text-6xl font-bold mt-4 mb-6">
+                    Featured <span class="gradient-text">Projects</span>
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-12">
+                <!-- Project 1 -->
+                <div class="project-card">
+                    <div class="project-card-inner">
+                        <div class="parallax-img-container glass-card overflow-hidden aspect-video depth-shadow">
+                            <img src="https://images.unsplash.com/photo-1551288049-bbbda5366392?w=800&fit=crop" 
+                                 alt="Project 1" 
+                                 loading="lazy"
+                                 class="parallax-img w-full h-full object-cover hover:scale-110 transition-transform duration-1000">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-8 flex flex-col justify-end">
+                                <span class="text-purple-400 text-xs font-bold uppercase tracking-widest mb-2">Mobile Design</span>
+                                <h3 class="text-2xl font-bold mb-2">FinTech App</h3>
+                                <p class="text-gray-300 text-sm">Complete UI/UX ecosystem with micro-interactions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 2 -->
+                <div class="project-card">
+                    <div class="project-card-inner">
+                        <div class="parallax-img-container glass-card overflow-hidden aspect-video depth-shadow">
+                            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&fit=crop" 
+                                 alt="Project 2" 
+                                 loading="lazy"
+                                 class="parallax-img w-full h-full object-cover hover:scale-110 transition-transform duration-1000">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-8 flex flex-col justify-end">
+                                <span class="text-cyan-400 text-xs font-bold uppercase tracking-widest mb-2">Motion Design</span>
+                                <h3 class="text-2xl font-bold mb-2">Brand Reveal</h3>
+                                <p class="text-gray-300 text-sm">3D animated logo and brand identity system</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 3 -->
+                <div class="project-card">
+                    <div class="project-card-inner">
+                        <div class="parallax-img-container glass-card overflow-hidden aspect-video depth-shadow">
+                            <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&fit=crop" 
+                                 alt="Project 3" 
+                                 loading="lazy"
+                                 class="parallax-img w-full h-full object-cover hover:scale-110 transition-transform duration-1000">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-8 flex flex-col justify-end">
+                                <span class="text-pink-400 text-xs font-bold uppercase tracking-widest mb-2">Branding</span>
+                                <h3 class="text-2xl font-bold mb-2">Corporate Identity</h3>
+                                <p class="text-gray-300 text-sm">Full brand system with style guide and assets</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 4 -->
+                <div class="project-card">
+                    <div class="project-card-inner">
+                        <div class="parallax-img-container glass-card overflow-hidden aspect-video depth-shadow">
+                            <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&fit=crop" 
+                                 alt="Project 4" 
+                                 loading="lazy" 
+                                 class="parallax-img w-full h-full object-cover hover:scale-110 transition-transform duration-1000">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-8 flex flex-col justify-end">
+                                <span class="text-purple-400 text-xs font-bold uppercase tracking-widest mb-2">Web Design</span>
+                                <h3 class="text-2xl font-bold mb-2">E-Commerce Platform</h3>
+                                <p class="text-gray-300 text-sm">Modern shopping experience with 3D elements</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20">
+                <span class="text-sm font-bold text-purple-400 uppercase tracking-widest">Testimonials</span>
+                <h2 class="text-4xl md:text-6xl font-bold mt-4 mb-6">
+                    Client <span class="gradient-text">Feedback</span>
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Testimonial 1 -->
+                <div class="testimonial-3d glass-card p-8 rounded-3xl">
+                    <div class="text-5xl text-purple-400 mb-4">"</div>
+                    <p class="text-gray-300 mb-8 leading-relaxed">
+                        Outstanding work! The 3D animations and attention to detail exceeded our expectations. Highly recommended.
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center font-bold">
+                            JD
+                        </div>
+                        <div>
+                            <div class="font-bold">James Douglas</div>
+                            <div class="text-sm text-gray-400">CEO, TechStart</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="testimonial-3d glass-card p-8 rounded-3xl">
+                    <div class="text-5xl text-cyan-400 mb-4">"</div>
+                    <p class="text-gray-300 mb-8 leading-relaxed">
+                        Professional, creative, and delivers on time. The brand identity work was absolutely phenomenal.
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-600 to-pink-600 flex items-center justify-center font-bold">
+                            SA
+                        </div>
+                        <div>
+                            <div class="font-bold">Sarah Anderson</div>
+                            <div class="text-sm text-gray-400">Director, Creative Studio</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="testimonial-3d glass-card p-8 rounded-3xl">
+                    <div class="text-5xl text-pink-400 mb-4">"</div>
+                    <p class="text-gray-300 mb-8 leading-relaxed">
+                        A true master of visual design. The UI/UX work transformed our product completely. Amazing results!
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center font-bold">
+                            MR
+                        </div>
+                        <div>
+                            <div class="font-bold">Michael Roberts</div>
+                            <div class="text-sm text-gray-400">Founder, AppFlow</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16">
+                <!-- Contact Info -->
+                <div class="parallax-layer layer-front">
+                    <span class="text-sm font-bold text-purple-400 uppercase tracking-widest">Get In Touch</span>
+                    <h2 class="text-4xl md:text-6xl font-bold mt-4 mb-8">
+                        Let's Create <span class="gradient-text">Together</span>
+                    </h2>
+                    <p class="text-gray-400 text-lg mb-12">
+                        Ready to bring your vision to life? Let's discuss your next project.
+                    </p>
+
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-6 glass-card p-6 rounded-2xl">
+                            <div class="w-14 h-14 bg-gradient-to-br from-purple-600 to-purple-400 rounded-2xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 uppercase tracking-wider">Email</div>
+                                <div class="font-bold"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="472428293326243307252e342322342e20296924282a">[email&#160;protected]</a></div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-6 glass-card p-6 rounded-2xl">
+                            <div class="w-14 h-14 bg-gradient-to-br from-cyan-600 to-cyan-400 rounded-2xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 uppercase tracking-wider">Phone / WhatsApp</div>
+                                <div class="font-bold">+251 916 09 0427</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-6 glass-card p-6 rounded-2xl">
+                            <div class="w-14 h-14 bg-gradient-to-br from-pink-600 to-pink-400 rounded-2xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 uppercase tracking-wider">Instagram</div>
+                                <div class="font-bold">@birhaneyesus16</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="parallax-layer layer-mid">
+                    <form class="glass-card p-8 md:p-10 rounded-3xl space-y-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Name</label>
+                                <input type="text" 
+                                       class="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                                       placeholder="John Doe">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email</label>
+                                <input type="email" 
+                                       class="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                                       placeholder="john@example.com">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Subject</label>
+                            <input type="text" 
+                                   class="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                                   placeholder="Project Inquiry">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Message</label>
+                            <textarea rows="5" 
+                                      class="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all resize-none"
+                                      placeholder="Tell me about your project..."></textarea>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full py-5 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-2xl font-bold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all btn-3d flex items-center justify-center gap-3">
+                            Send Message
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-white/10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-cyan-600 rounded-xl flex items-center justify-center font-bold text-white">
+                        BA
+                    </div>
+                    <span class="font-bold uppercase">Bis Design</span>
+                </div>
+                
+                <p class="text-gray-500 text-sm">
+                    © <span id="copyright-year"></span> Birhaneyesus Alemayehu. Visual Excellence.
+                </p>
+                
+                <div class="flex gap-4">
+                    <a href="#" class="w-10 h-10 glass-card rounded-xl flex items-center justify-center hover:border-purple-500 transition-all">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                    <a href="#" class="w-10 h-10 glass-card rounded-xl flex items-center justify-center hover:border-purple-500 transition-all">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/></svg>
+                    </a>
+                    <a href="#" class="w-10 h-10 glass-card rounded-xl flex items-center justify-center hover:border-purple-500 transition-all">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // ========================================
+        // 1. THREE.JS 3D BACKGROUND
+        // ========================================
+        let scene, camera, renderer, particles, particleGeometry, particleMaterial;
+        let mouseX = 0, mouseY = 0;
+
+        function init3DBackground() {
+            const canvas = document.getElementById('canvas-3d');
+            scene = new THREE.Scene();
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 500;
+
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas, 
+                alpha: true,
+                antialias: window.innerWidth > 768, // Disable antialiasing on mobile
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // Disable unnecessary features for performance
+            renderer.shadowMap.enabled = false;
+
+            // Create particle system (optimized count)
+            particleGeometry = new THREE.BufferGeometry();
+            const particleCount = window.innerWidth < 768 ? 500 : 1200; // Less particles on mobile
+            const posArray = new Float32Array(particleCount * 3);
+            const colorArray = new Float32Array(particleCount * 3);
+
+            for(let i = 0; i < particleCount * 3; i += 3) {
+                posArray[i] = (Math.random() - 0.5) * 2000;
+                posArray[i + 1] = (Math.random() - 0.5) * 2000;
+                posArray[i + 2] = (Math.random() - 0.5) * 1000;
+
+                // Random colors between purple and cyan
+                const color = new THREE.Color();
+                color.setHSL(Math.random() * 0.3 + 0.6, 0.8, 0.6);
+                colorArray[i] = color.r;
+                colorArray[i + 1] = color.g;
+                colorArray[i + 2] = color.b;
+            }
+
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            particleGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+
+            particleMaterial = new THREE.PointsMaterial({
+                size: 2.5,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true
+            });
+
+            particles = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particles);
+
+            // Add lighting effect
+            const ambientLight = new THREE.AmbientLight(0x7c3aed, 0.5);
+            scene.add(ambientLight);
+
+            animate3D();
+        }
+
+        let frameCount = 0;
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            frameCount++;
+
+            // Rotate particles (optimize by updating less frequently)
+            if (frameCount % 2 === 0) {
+                particles.rotation.y += 0.001;
+                particles.rotation.x += 0.0004;
+
+                // Mouse parallax effect
+                particles.rotation.x += (mouseY * 0.00005 - particles.rotation.x) * 0.05;
+                particles.rotation.y += (mouseX * 0.00005 - particles.rotation.y) * 0.05;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Mouse move for parallax (throttled for performance)
+        let lastMoveTime = 0;
+        document.addEventListener('mousemove', (event) => {
+            const now = Date.now();
+            if (now - lastMoveTime < 16) return; // Throttle to ~60fps
+            lastMoveTime = now;
+            
+            mouseX = event.clientX - window.innerWidth / 2;
+            mouseY = event.clientY - window.innerHeight / 2;
+
+            // Parallax effect on layers (only on larger screens)
+            if (window.innerWidth > 768) {
+                gsap.to('.layer-front', {
+                    x: mouseX * 0.02,
+                    y: mouseY * 0.02,
+                    duration: 0.5
+                });
+                gsap.to('.layer-mid', {
+                    x: mouseX * 0.01,
+                    y: mouseY * 0.01,
+                    duration: 0.7
+                });
+            }
+        });
+
+        // ========================================
+        // 2. SCROLL ANIMATIONS
+        // ========================================
+        function initScrollAnimations() {
+            // Configure ScrollTrigger for better performance
+            ScrollTrigger.config({
+                limitCallbacks: true,
+                syncInterval: 150
+            });
+            
+            // Scroll progress bar
+            ScrollTrigger.create({
+                trigger: 'body',
+                start: 'top top',
+                end: 'bottom bottom',
+                onUpdate: (self) => {
+                    document.getElementById('scrollProgress').style.width = (self.progress * 100) + '%';
+                }
+            });
+
+            // Profile Image Morphing on Scroll
+            const profileMorph = document.getElementById('profileMorph');
+            if (profileMorph) {
+                // Add scale and position animation
+                gsap.to(profileMorph, {
+                    scrollTrigger: {
+                        trigger: 'body',
+                        start: 'top top',
+                        end: 'bottom bottom',
+                        scrub: 1,
+                        onUpdate: (self) => {
+                            const progress = self.progress;
+                            // Subtle scaling based on scroll
+                            const scale = 1 + (Math.sin(progress * Math.PI * 2) * 0.05);
+                            profileMorph.style.transform = `scale(${scale})`;
+                        }
+                    }
+                });
+
+                // Morph to circle when scrolling to services
+                ScrollTrigger.create({
+                    trigger: '#services',
+                    start: 'top center',
+                    end: 'center center',
+                    onEnter: () => {
+                        profileMorph.classList.add('morph-circle');
+                        gsap.to(profileMorph, { 
+                            rotation: 360, 
+                            duration: 1,
+                            ease: 'power2.out'
+                        });
+                    },
+                    onLeaveBack: () => {
+                        profileMorph.classList.remove('morph-circle');
+                        gsap.to(profileMorph, { 
+                            rotation: 0, 
+                            duration: 1,
+                            ease: 'power2.out'
+                        });
+                    }
+                });
+
+                // Morph to blob when scrolling to portfolio
+                ScrollTrigger.create({
+                    trigger: '#work',
+                    start: 'top center',
+                    end: 'center center',
+                    onEnter: () => {
+                        profileMorph.classList.remove('morph-circle');
+                        profileMorph.classList.add('morph-blob');
+                    },
+                    onLeaveBack: () => {
+                        profileMorph.classList.remove('morph-blob');
+                        profileMorph.classList.add('morph-circle');
+                    }
+                });
+
+                // Morph to diamond when scrolling to contact
+                ScrollTrigger.create({
+                    trigger: '#contact',
+                    start: 'top center',
+                    onEnter: () => {
+                        profileMorph.classList.remove('morph-blob');
+                        profileMorph.classList.add('morph-diamond');
+                        gsap.to(profileMorph, { 
+                            rotation: 45, 
+                            duration: 1.2,
+                            ease: 'power2.inOut'
+                        });
+                    },
+                    onLeaveBack: () => {
+                        profileMorph.classList.remove('morph-diamond');
+                        profileMorph.classList.add('morph-blob');
+                    }
+                });
+
+                // Reset to original when scrolling back to top
+                ScrollTrigger.create({
+                    trigger: '#home',
+                    start: 'top top',
+                    end: 'bottom center',
+                    onLeave: () => {},
+                    onEnterBack: () => {
+                        profileMorph.classList.remove('morph-circle', 'morph-blob', 'morph-diamond');
+                        gsap.to(profileMorph, { 
+                            rotation: 0,
+                            duration: 1,
+                            ease: 'power2.out'
+                        });
+                    }
+                });
+            }
+
+            // Service cards stagger animation
+            const serviceCards = document.querySelectorAll('.service-card');
+            ScrollTrigger.batch(serviceCards, {
+                onEnter: batch => {
+                    gsap.to(batch, {
+                        opacity: 1,
+                        y: 0,
+                        z: 0,
+                        stagger: 0.15,
+                        duration: 1,
+                        ease: 'power3.out'
+                    });
+                    batch.forEach(card => card.classList.add('visible'));
+                },
+                start: 'top 80%'
+            });
+
+            // Parallax depth animation for layers
+            gsap.to('.layer-mid', {
+                scrollTrigger: {
+                    trigger: '#services',
+                    start: 'top bottom',
+                    end: 'top center',
+                    scrub: 1
+                },
+                z: 0,
+                scale: 1,
+                ease: 'none'
+            });
+
+            gsap.to('.layer-front', {
+                scrollTrigger: {
+                    trigger: '#work',
+                    start: 'top bottom',
+                    end: 'top center',
+                    scrub: 1
+                },
+                z: 50,
+                scale: 0.95,
+                ease: 'none'
+            });
+
+            // Image parallax on scroll
+            document.querySelectorAll('.parallax-img').forEach(img => {
+                gsap.to(img, {
+                    yPercent: 20,
+                    ease: 'none',
+                    scrollTrigger: {
+                        trigger: img.closest('.parallax-img-container'),
+                        start: 'top bottom',
+                        end: 'bottom top',
+                        scrub: true
+                    }
+                });
+            });
+
+            // Project cards entrance
+            document.querySelectorAll('.project-card').forEach((card, index) => {
+                gsap.from(card, {
+                    scrollTrigger: {
+                        trigger: card,
+                        start: 'top 80%'
+                    },
+                    opacity: 0,
+                    y: 100,
+                    rotateX: -20,
+                    duration: 1,
+                    delay: index * 0.2,
+                    ease: 'power3.out'
+                });
+            });
+
+            // Testimonial cards
+            document.querySelectorAll('.testimonial-3d').forEach((card, index) => {
+                gsap.from(card, {
+                    scrollTrigger: {
+                        trigger: card,
+                        start: 'top 85%'
+                    },
+                    opacity: 0,
+                    z: -100,
+                    rotateY: -30,
+                    duration: 1,
+                    delay: index * 0.15,
+                    ease: 'back.out(1.7)'
+                });
+            });
+        }
+
+        // ========================================
+        // 3. STATS COUNTER ANIMATION
+        // ========================================
+        function animateStats() {
+            const stats = document.querySelectorAll('.stat-number');
+            
+            stats.forEach(stat => {
+                const target = parseInt(stat.dataset.target);
+                let current = 0;
+                const increment = target / 50;
+                const duration = 2000;
+                const stepTime = duration / 50;
+
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        stat.textContent = target + '+';
+                        clearInterval(timer);
+                    } else {
+                        stat.textContent = Math.floor(current) + '+';
+                    }
+                }, stepTime);
+            });
+        }
+
+        // ========================================
+        // 4. UTILITY FUNCTIONS
+        // ========================================
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleMobileMenu() {
+            // Add mobile menu logic here
+            alert('Mobile menu - implement as needed');
+        }
+
+        // Navbar scroll effect
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            const currentScroll = window.pageYOffset;
+
+            if (currentScroll > 100) {
+                navbar.style.background = 'rgba(10, 1, 24, 0.95)';
+                navbar.style.padding = '1rem 0';
+            } else {
+                navbar.style.background = 'rgba(10, 1, 24, 0.75)';
+                navbar.style.padding = '1.25rem 0';
+            }
+
+            lastScroll = currentScroll;
+        });
+
+        // ========================================
+        // 5. WINDOW RESIZE
+        // ========================================
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ========================================
+        // 6. INITIALIZATION
+        // ========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            // Set copyright year
+            document.getElementById('copyright-year').textContent = new Date().getFullYear();
+            
+            // Initialize 3D background immediately
+            init3DBackground();
+            
+            // Hide loader faster
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+            }, 300);
+
+            // Initialize scroll animations
+            initScrollAnimations();
+            
+            // Animate stats when visible
+            ScrollTrigger.create({
+                trigger: '.stat-number',
+                start: 'top 80%',
+                once: true,
+                onEnter: animateStats
+            });
+
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        });
+
+        // Performance optimization: Pause animations when tab is not visible
+        document.add
